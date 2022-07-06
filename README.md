@@ -1,7 +1,7 @@
-Huawei Loadbalancer - Kong
+AWS Loadbalancer - Kong
 =========
 
-Ansible Role to setup a API Gateway Kong with a Huawei Load Balancer
+Ansible Role to setup a API Gateway Kong with a AWS Load Balancer
 
 
 Role Variables
@@ -24,7 +24,7 @@ Example Playbook
   remote_user: "root"
 
   roles:
-    - role: ansible-role-huawei-cce-kong
+    - role: ansible-role-aws-cce-kong
       LB_ID: "{{ lookup('env', 'LB_ID') }}"
       LB_VIP_SUBNET_ID: "{{ lookup('env', 'LB_SUBNET_ID') }}"
       KONG_HOSTNAME: "{{ lookup('env', 'KONG_HOSTNAME') }}"
