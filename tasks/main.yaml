@@ -9,8 +9,8 @@
   loop_control:
     loop_var: required_variable
   with_items:
-    - "{{ LB_ID }}"
-    - "{{ LB_PUBLIC_IP }}"
+    # - "{{ LB_ID }}"
+    # - "{{ LB_PUBLIC_IP }}"
     - "{{ KONG_HOSTNAME }}"
   no_log: True
   

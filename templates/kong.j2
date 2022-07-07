@@ -13,6 +13,8 @@ metadata:
 spec:
   group: configuration.konghq.com
   names:
+    categories:
+    - kong-ingress-controller
     kind: KongClusterPlugin
     listKind: KongClusterPluginList
     plural: kongclusterplugins
@@ -139,6 +141,8 @@ metadata:
 spec:
   group: configuration.konghq.com
   names:
+    categories:
+    - kong-ingress-controller
     kind: KongConsumer
     listKind: KongConsumerList
     plural: kongconsumers
@@ -208,6 +212,8 @@ metadata:
 spec:
   group: configuration.konghq.com
   names:
+    categories:
+    - kong-ingress-controller
     kind: KongIngress
     listKind: KongIngressList
     plural: kongingresses
@@ -522,6 +528,8 @@ metadata:
 spec:
   group: configuration.konghq.com
   names:
+    categories:
+    - kong-ingress-controller
     kind: KongPlugin
     listKind: KongPluginList
     plural: kongplugins
@@ -644,6 +652,8 @@ metadata:
 spec:
   group: configuration.konghq.com
   names:
+    categories:
+    - kong-ingress-controller
     kind: TCPIngress
     listKind: TCPIngressList
     plural: tcpingresses
@@ -830,6 +840,8 @@ metadata:
 spec:
   group: configuration.konghq.com
   names:
+    categories:
+    - kong-ingress-controller
     kind: UDPIngress
     listKind: UDPIngressList
     plural: udpingresses
@@ -1380,18 +1392,23 @@ subjects:
   namespace: kong
 ---
 apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: kong-serviceaccount
+  name: kong-serviceaccount-token
+  namespace: kong
+type: kubernetes.io/service-account-token
+---
+apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    external-dns.alpha.kubernetes.io/hostname: {{ KONG_HOSTNAME }}
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
   name: kong-proxy
   namespace: kong
 spec:
-  loadBalancerIP: {{ LB_PUBLIC_IP }}
-  externalTrafficPolicy: Local
   ports:
   - name: proxy
     port: 80
@@ -1435,10 +1452,12 @@ spec:
     metadata:
       annotations:
         kuma.io/gateway: enabled
+        kuma.io/service-account-token-volume: kong-serviceaccount-token
         traffic.sidecar.istio.io/includeInboundPorts: ""
       labels:
         app: ingress-kong
     spec:
+      automountServiceAccountToken: false
       containers:
       - env:
         - name: KONG_PROXY_LISTEN
@@ -1461,10 +1480,6 @@ spec:
           value: /dev/stderr
         - name: KONG_PROXY_ERROR_LOG
           value: /dev/stderr
-        - name: KONG_NGINX_PROXY_PROXY_BUFFER_SIZE
-          value: 128k
-        - name: KONG_NGINX_PROXY_PROXY_BUFFERS
-          value: 8 256k
         image: kong:2.8
         lifecycle:
           preStop:
@@ -1505,7 +1520,7 @@ spec:
           successThreshold: 1
           timeoutSeconds: 1
       - env:
-        - name: CONTROLLER_KONG_ADMIN_URL
+        - name: {{ KONG_HOSTNAME }}
           value: https://127.0.0.1:8444
         - name: CONTROLLER_KONG_ADMIN_TLS_SKIP_VERIFY
           value: "true"
@@ -1521,7 +1536,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
-        image: kong/kubernetes-ingress-controller:2.3.1
+        image: kong/kubernetes-ingress-controller:2.4.2
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3
@@ -1551,7 +1566,22 @@ spec:
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
+        volumeMounts:
+        - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+          name: kong-serviceaccount-token
+          readOnly: true
       serviceAccountName: kong-serviceaccount
+      volumes:
+      - name: kong-serviceaccount-token
+        secret:
+          items:
+          - key: token
+            path: token
+          - key: ca.crt
+            path: ca.crt
+          - key: namespace
+            path: namespace
+          secretName: kong-serviceaccount-token
 ---
 apiVersion: networking.k8s.io/v1
 kind: IngressClass
