@@ -1403,6 +1403,8 @@ type: kubernetes.io/service-account-token
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    external-dns.alpha.kubernetes.io/hostname: {{ TRAEFIK_HOSTNAME }}"."{{ TRAEFIK_DOMAIN }}
   name: kong-proxy
   namespace: kong
 spec:
