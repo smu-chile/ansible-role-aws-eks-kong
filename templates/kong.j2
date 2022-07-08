@@ -1519,7 +1519,7 @@ spec:
           successThreshold: 1
           timeoutSeconds: 1
       - env:
-        - name: {{ KONG_HOSTNAME }}
+        - name: CONTROLLER_KONG_ADMIN_URL
           value: https://127.0.0.1:8444
         - name: CONTROLLER_KONG_ADMIN_TLS_SKIP_VERIFY
           value: "true"
