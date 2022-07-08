@@ -1404,7 +1404,7 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: {{ TRAEFIK_HOSTNAME }}"."{{ TRAEFIK_DOMAIN }}
+    external-dns.alpha.kubernetes.io/hostname: {{ KONG_HOSTNAME }}
   name: kong-proxy
   namespace: kong
 spec:
